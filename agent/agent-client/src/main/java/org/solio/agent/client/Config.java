@@ -1,9 +1,13 @@
 package org.solio.agent.client;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 import java.util.Properties;
+
+import org.solio.agent.util.CommonUtils;
 
 public final class Config
 {
@@ -14,10 +18,15 @@ public final class Config
 	
 	private Properties properties = new Properties();
 	
+	private String currentPath;
+    
+    private String libPath;
+	
 	private Instrumentation inst;
 	
 	private Config()
 	{
+	    initVariables();
 		initProperties();
 	}
 	
@@ -50,23 +59,48 @@ public final class Config
 	{
 		this.inst = inst;
 	}
+	
+	public String getCurrentPath()
+    {
+        return currentPath;
+    }
+
+    public String getLibPath()
+    {
+        return libPath;
+    }
+
+    private void initVariables()
+	{
+	    try
+        {
+            currentPath = (new File(".")).getCanonicalPath() + "/";
+            libPath = currentPath + "lib/";
+            
+            System.out.println("currentPath is :" + currentPath);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+	}
 
 	private void initProperties()
 	{
-		InputStream in = Config.class.getResourceAsStream("/agent.properties");
-		if (null == in)
-		{
-			throw new IllegalStateException("agent.properties not found");
-		}
-		
+	    InputStream in = null;
 		try
 		{
+		    in = new FileInputStream(new File(libPath + "agent.properties"));
 			properties.load(in);
 		}
 		catch (IOException e)
 		{
-			// TODO Auto-generated catch block
+		    System.out.println("agent.properties not found");
 			e.printStackTrace();
+		}
+		finally
+		{
+		    CommonUtils.closeQuitely(in);
 		}
 	}
 }
